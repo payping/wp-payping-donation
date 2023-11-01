@@ -1,82 +1,60 @@
 <?php
+ if ( ! defined( 'ABSPATH' ) ) exit; 
 
-/*
-Plugin Name:  Donation PayPing Plugin
-Plugin URI:   https://payping.ir
-Description:  Donation PayPing Plugin For Sites.
-Version:      1.0.0
-Author:       PayPing
-Author URI:   https://payping.ir/
-License:      GPL2
-License URI:  https://www.gnu.org/licenses/gpl-2.0.html
-Domain Path:  /languages
-*/
-defined( 'ABSPATH' ) || exit;
-
-define( 'DONATION_PAYPING_VERSION', '1.0.0' );
-define( 'DPPGPD', dirname( __FILE__ ) );
-define( 'GPPGPDU',  plugin_dir_url( __FILE__ ) );
-define( 'GPPTXTDMN', 'donationpayping' );
-
-if( isset( $_GET['page'] ) && $_GET['page'] === 'PayPing-Donate' )
-add_action( 'admin_enqueue_scripts', 'callback_for_setting_up_scripts' );
-function callback_for_setting_up_scripts(){
-    wp_register_style( 'index-donate', GPPGPDU . 'assets/css/index.css' );
-    wp_enqueue_style( 'index-donate' );
-    wp_enqueue_script( 'donate-ajax', GPPGPDU . 'assets/js/donate-ajax.js', array('jquery'), null, true );
-    wp_localize_script(
-		'donate-ajax',
-		'donate_ajax_obj',
-		array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) )
-	);
-}
-
-function Donate_Payping_Menu(){
-    add_menu_page( __( 'افزونه حمایت مالی پی‌پینگ', 'textdomain' ), __( 'حمایت مالی پی‌پینگ', 'textdomain' ), 'read', 'PayPing-Donate', 'Donate_Payping_function', 'dashicons-chart-bar', 7 );
-	add_action( 'admin_init', 'register_Donate_PayPing_plugin_settings' );
-}
-add_action('admin_menu', 'Donate_Payping_Menu');
-
-function register_Donate_PayPing_plugin_settings(){
-	register_setting( 'Donate_PayPing-plugin-settings-group', 'Script' );
-    register_setting( 'Donate_PayPing-plugin-settings-group', 'Pages' );
-    register_setting( 'Donate_PayPing-plugin-settings-group', 'Pages_Ids' );
-}
-
-function Donate_Payping_function(){ ?>
+class payping_donation { 
+    public function __construct() {
+        add_action( 'admin_enqueue_scripts', [$this, 'callback_for_setting_up_scripts'] );
+		add_action( 'admin_init', [$this, 'register_Donate_PayPing_plugin_settings'] );
+        add_action('admin_menu', [$this, 'Donate_Payping_Menu']);
+        add_action( 'wp_footer', [$this, 'Donate_PayPing_Script'] );
+        add_action( 'wp_ajax_Donate_PayPing_ajax_request', [$this, 'Donate_PayPing_ajax_request']);
+        add_action( 'wp_ajax_nopriv_Donate_PayPing_ajax_request', [$this, 'Donate_PayPing_ajax_request']);
+        add_shortcode('PayPingDonate', [$this, 'Donate_PayPing_Script_shortcode']);
+	}
+    public function callback_for_setting_up_scripts(){
+        wp_register_style( 'index-donate', DPPDU . 'assets/css/index.css' );
+        wp_enqueue_style( 'index-donate' );
+        wp_enqueue_script( 'donate-ajax', DPPDU . 'assets/js/donate-ajax.js', array('jquery'), null, true );
+        wp_localize_script(
+            'donate-ajax',
+            'donate_ajax_obj',
+            array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) )
+        );
+    }
+    public function Donate_Payping_Menu(){
+        add_menu_page( __( 'افزونه حمایت مالی پی‌پینگ', 'textdomain' ), __( 'حمایت مالی پی‌پینگ', 'textdomain' ), 'read', 'PayPing-Donate', [$this, 'Donate_Payping_function'], 'dashicons-chart-bar', 7 );
+    }
+    
+    public function register_Donate_PayPing_plugin_settings(){
+        register_setting( 'Donate_PayPing-plugin-settings-group', 'Script' );
+        register_setting( 'Donate_PayPing-plugin-settings-group', 'Pages' );
+        register_setting( 'Donate_PayPing-plugin-settings-group', 'Pages_Ids' );
+    }
+    public function Donate_Payping_function(){ ?>
 		<div id="form" class="wrap">
 		    <h1 class="wp-heading-inline">تنظیمات افزونه حمایت مالی پی‌پینگ</h1>
 		    <hr class="wp-header-end">
             <form id="donate_payping" method="post" action="options.php">
+				<?php wp_nonce_field( 'pp_donate_nonce', 'donate_payping_nonce' ); ?>
                 <?php settings_fields( 'Donate_PayPing-plugin-settings-group' ); ?>
                 <?php do_settings_sections( 'Donate_PayPing-plugin-settings-group' ); ?>
                 <table class="form-table">
-                    <?php
-        if( in_array('payping-wordpress-master/index.php', apply_filters('active_plugins', get_option('active_plugins')))){ 
-        $plugin = get_plugin_data( plugin_dir_path( __DIR__ ) . 'payping-wordpress-master/index.php');
-        ?>
                     <tr valign="top">
-                        <th scope="row">
-                            <?php _e('استفاده از توکن دیگر افزونه‌ها', 'text_domain'); ?></th>
-                        <td>
-                            <button type="button" class="button" value="<?php echo get_option('pp_token'); ?>">
-                                <?php _e( $plugin['Name'], 'text_domain') ?>
-                            </button>
-                        </td>
-                    </tr>
-        <?php } ?>
-                    <tr valign="top">
-                        <th scope="row"><?php _e('توکن پی‌پینگ', 'text_domain') ?></th>
-                        <td><input id="TokenCode" placeholder="توکن پی‌پینگ" type="text" name="TokenCode" /></td>
+                        <th scope="row"><?php esc_html_e('توکن پی‌پینگ', 'text_domain') ?></th>
+                        <td><input id="TokenCode" placeholder="توکن پی‌پینگ" type="text" name="TokenCode" value="<?php echo esc_html(get_option('Payping_TokenCode')); ?>"/></td>
                     </tr>
 
                     <tr valign="top">
-                        <th scope="row"><?php _e('نام کاربری پی‌پینگ', 'text_domain') ?></th>
-                        <td><input id="userName" placeholder="نام کاربری پی‌پینگ" type="text" name="UserName" /></td>
+                        <th scope="row"><?php esc_html_e('نام کاربری پی‌پینگ', 'text_domain') ?></th>
+                        <td><input id="userName" placeholder="نام کاربری پی‌پینگ" type="text" name="UserName"  />
+							<div id="loader" class="ajax-loader">
+  								<div class="spinner"></div>
+							</div>
+						</td>
                     </tr>
 
                     <tr valign="top">
-                        <th scope="row"><?php _e('توضیحات', 'text_domain') ?></th>
+                        <th scope="row"><?php esc_html_e('توضیحات', 'text_domain') ?></th>
                         <td>
                             <textarea id="description" placeholder="توضیحی برای حمایت از خودتان بنویسید" id="" cols="30" rows="10"></textarea>
                         </td>
@@ -85,7 +63,7 @@ function Donate_Payping_function(){ ?>
                     <tr valign="top">
                         <th scope="row"></th>
                         <td>
-                            <p id="title_price"><?php _e('مبلغ پیشنهادی', 'text_domain') ?></p>
+                            <p id="title_price"><?php esc_html_e('مبلغ پیشنهادی', 'text_domain') ?></p><span class="suggested_subtitle">مبلغ باید بیشتر از ۱۰۰۰ تومان و کمتر از ۵۰ میلیون تومان باشد</span>
                             <input name="switch" value="" type="checkbox" id="switch">
                             <label id="price_switch" for="switch" onclick="switch_checkbox_donate()"></label>
                             <script type="text/javascript">
@@ -99,6 +77,21 @@ function Donate_Payping_function(){ ?>
                                     if( checkBox.checked == false ){
                                         text.style.display = "table-row";
                                     }else{
+										var donateScript = document.getElementById('donateScript');
+										var scriptContent = donateScript.value;
+										var tempElement = document.createElement('div');
+										tempElement.innerHTML = scriptContent;
+										var scriptTag = tempElement.querySelector('script');
+										scriptTag.setAttribute('pp-amounts','');
+										donateScript.value = tempElement.innerHTML;
+										var inputs = document.querySelectorAll('.amountInput');
+										for (var i = 0; i < inputs.length; i++) {
+    										inputs[i].value = '';
+										}
+										var elements = document.querySelectorAll('.select-amount');
+										for (var i = 0; i < elements.length; i++) {
+    										elements[i].remove();
+										}
                                         text.style.display = "none";
                                     }
                                 }
@@ -107,22 +100,25 @@ function Donate_Payping_function(){ ?>
                     </tr>
 
                     <tr id="other_prices" valign="top" style="display:none;">
-                        <th scope="row"><?php _e('مبلغ پیشنهادی', 'text_domain') ?></th>
+                        <th scope="row"><?php esc_html_e('مبلغ پیشنهادی', 'text_domain') ?></th>
                         <td>
-                            <input id="amount0" type="text" placeholder="مبلغ ۱ پیشنهادی خود را وارد کنید" class="amountInput" />
+                            <div class="PriceInput">
+								<input id="amount0" type="number" placeholder="مبلغ پیشنهادی خود را وارد کنید" class="amountInput" />
+								<span class="errorTxt"></span>
+							</div>
                             <div id="prices"></div>
                             <button id="add_price" type="button">مبلغ جدید</button>
                         </td>
                     </tr>
 
                     <tr valign="top" style="display:none">
-                        <th scope="row"><?php _e('کد اسکریپت', 'text_domain') ?></th>
-                        <td><textarea id="donateScript" name="Script" rows="10" cols="50"><?php echo esc_attr( get_option('Script') ); ?></textarea>
+                        <th scope="row"><?php esc_html_e('کد اسکریپت', 'text_domain') ?></th>
+                        <td><textarea id="donateScript" name="Script" rows="10" cols="50"><?php echo esc_html(get_option('Script')); ?></textarea>
                         </td>
                     </tr>
                     
                     <tr valign="top">
-                       <th scope="row"><?php _e('نمایش در برگه', 'text_domain') ?></th>
+                       <th scope="row"><?php esc_html_e('نمایش در برگه', 'text_domain') ?></th>
                         <td>
                            <?php  
                             $pages = get_pages();
@@ -159,18 +155,16 @@ function Donate_Payping_function(){ ?>
                                 'is_single' => __('برگه نوشته', 'text_domain'),
                                 'is_archive' => __('برگه بایگانی', 'text_domain')
                             );
-                            echo '<section id="OtherPages" class="enable"><div class="title_checkbox">'. __( 'برگه‌های وردپرس', 'text_domain' ) .'</div><hr/>';
+                            echo '<section id="OtherPages" class="enable"><div class="title_checkbox">'. esc_html__( 'برگه‌های وردپرس', 'text_domain' ) .'</div><hr/>';
                             foreach( $wordpress_pages as $key => $wp_page ){
                                 if( in_array( $key , $select_pages ) ){
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . $key . '"/>';
+                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
                                 }else{
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . $key . '"/>';
+                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
                                 }
                                 $option .= '<span class="show-title" >' . $wp_page . '</span></div>';
                                 if( $count_page%3 == 0 ){
-                                    echo '<br/>';
                                     echo $option;
-                                    echo '<br/>';
                                 }else{
                                     echo $option;
                                 }
@@ -185,18 +179,16 @@ function Donate_Payping_function(){ ?>
                                 'is_checkout' => __('تسویه حساب', 'text_domain'),
                                 'is_account_page' => __('حساب کاربری', 'text_domain')
                             );
-                            echo '<div class="title_checkbox">'. __( 'افزونه ووکامرس', 'text_domain' ) .'</div><hr/>';
+                            echo '<div class="title_checkbox">'. esc_html__( 'افزونه ووکامرس', 'text_domain' ) .'</div><hr/>';
                             foreach( $woocommerce_pages as $key => $woo_page ){
                                 if( in_array( $key , $select_pages ) ){
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . $key . '"/>';
+                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
                                 }else{
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . $key . '"/>';
+                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
                                 }
                                 $option .= '<span class="show-title" >' . $woo_page . '</span></div>';
                                 if( $count_page%3 == 0 ){
-                                    echo '<br/>';
                                     echo $option;
-                                    echo '<br/>';
                                 }else{
                                     echo $option;
                                 }
@@ -209,16 +201,16 @@ function Donate_Payping_function(){ ?>
                             }else{
                                 $Pages_Ids = __('در هر خط یک آیدی یا نامک وارد کنید', 'text_domain');
                             }
-                            echo '<div class="title_checkbox">'. __( 'آیدی یا نامک برگه را وارد کنید', 'text_domain' ) .'</div><br/><span class="note-danger">'. __( 'در هر خط یک آیدی یا نامک را وارد کنید', 'text_domain' ) .'</span><hr/>';
-                            echo '<textarea name="Pages_Ids">' . $Pages_Ids . '</textarea></section>';
+                            echo '<div class="title_checkbox">'. esc_html__( 'آیدی یا نامک برگه را وارد کنید', 'text_domain' ) .'</div><br/><span class="note-danger">'. esc_html__( 'در هر خط یک آیدی یا نامک را وارد کنید', 'text_domain' ) .'</span><hr/>';
+                            echo '<textarea name="Pages_Ids">' . esc_html($Pages_Ids) . '</textarea></section>';
                             ?>
                         </td>
                     </tr>
                     
                     <tr valign="top">
-                       <th scope="row"><?php _e('شورتکد اسکریپت', 'text_domain') ?></th>
+                       <th scope="row"><?php esc_html_e('شورتکد اسکریپت', 'text_domain') ?></th>
                         <td>
-                           <span class="note-danger" ><?php _e('با استفاده از شورتکد زیر اسکریپت حمایت مالی را در هر بخشی که میخواهید نمایش دهید.', 'text_domain') ?></span><br/>
+                           <span class="note-danger" ><?php esc_html_e('با استفاده از شورتکد زیر اسکریپت حمایت مالی را در هر بخشی که میخواهید نمایش دهید.', 'text_domain') ?></span><br/>
                             <input type="text" value="[PayPingDonate]" id="pp_shortcode_donate" class="pp-shortcode-donate"/>
                         </td>
                     </tr>
@@ -392,8 +384,8 @@ function Donate_Payping_function(){ ?>
         </div> 
 <?php
 }
-add_action( 'wp_footer', 'Donate_PayPing_Script' );
-function Donate_PayPing_Script(){
+
+public function Donate_PayPing_Script(){
     if( !empty( get_option( 'Pages_Ids' ) ) ){
         $Pages_Ids = get_option( 'Pages_Ids' );
         $Pages_Ids_array = array_map( 'trim', explode("\n", $Pages_Ids ) );
@@ -418,72 +410,76 @@ function Donate_PayPing_Script(){
     );
     
     $Pages = array_intersect( $wordpress_pages, $select_pages );
-    
+	$ppScript = get_option( 'Script' );
+	$sanitized_ppScript = sanitize_option( 'pp_option', $ppScript );
     if( in_array( "all" , $select_pages ) ){
-        echo get_option( 'Script' );
+        echo $sanitized_ppScript;
     }elseif( ! empty( $Pages ) || ! empty( $Pages_Ids_array ) ){
         foreach( $Pages as $Page ){
             if( $Page() ){
-                echo get_option( 'Script' );
+                echo $sanitized_ppScript;
                 exit;
             }else{
                 foreach( $Pages_Ids_array as $page ){
                     if( is_page( $page ) ){
-                        echo get_option( 'Script' );
+                        echo $sanitized_ppScript;
                     }
                 }
             }
         }
     } 
 }
-
-function Donate_PayPing_Script_shortcode(){
-   echo get_option( 'Script' ); 
-}
-add_shortcode('PayPingDonate', 'Donate_PayPing_Script_shortcode');
-
-add_action( 'wp_ajax_Donate_PayPing_ajax_request', 'Donate_PayPing_ajax_request' );
-add_action( 'wp_ajax_nopriv_Donate_PayPing_ajax_request', 'Donate_PayPing_ajax_request' );
-function Donate_PayPing_ajax_request(){
-    if( isset( $_REQUEST ) ){
-        $TokenCode_Ajax = $_REQUEST['TokenCode'];
-        if( $TokenCode_Ajax == '' || $TokenCode_Ajax == null || $TokenCode_Ajax == false || $TokenCode_Ajax == 'NONE' ){
-            $TokenCode_Ajax = 'None';
-        }
-        
-        $getUserInfo_args = array(
-            'body' => json_encode(),
-            'timeout' => '45',
-            'redirection' => '5',
-            'httpsversion' => '1.0',
-            'blocking' => true,
-            'headers' => array(
-            'Authorization' => 'Bearer ' . $TokenCode_Ajax,
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json' ),
-            'cookies' => array()
-        );
-
-        $getUserInfo_url = 'https://oauth.payping.ir/connect/userinfo';
-        $getUserInfo_response = wp_remote_post( $getUserInfo_url, $getUserInfo_args );
-        if( is_wp_error( $getUserInfo_response ) ){
-            echo $Message = 'خطا در ارتباط به پی‌پینگ : شرح خطا '.$getUserInfo_response->get_error_message();
-        }else{
-            $code = wp_remote_retrieve_response_code( $getUserInfo_response );
-        if( $code === 200 ){
-            if ( isset( $getUserInfo_response["body"] ) and $getUserInfo_response["body"] != '' ) {
-                 $userInfo = $getUserInfo_response["body"];
-                 echo $userInfo;
-                exit;
-            }else{
-                echo $Message = ' کد خطا : '.$getUserInfo_response->get_error_message();
-            }
-        }elseif( $code === 400){
-            echo $Message = wp_remote_retrieve_body( $response ).'<br /> کد خطا: '.$getUserInfo_response->get_error_message();
-        }else{
-            echo $Message = wp_remote_retrieve_body( $response ).'<br /> کد خطا: '.$getUserInfo_response->get_error_message();
-        }
-        }
+    public function Donate_PayPing_Script_shortcode(){
+        echo esc_html(get_option( 'Script' )); 
     }
-   die();
+    public function Donate_PayPing_ajax_request(){
+     if( isset( $_REQUEST )){
+		 $nonce = sanitize_text_field($_REQUEST['donate_payping_nonce']);
+         if ( ! wp_verify_nonce( $nonce, 'pp_donate_nonce' ) ) {
+             wp_send_json_error( 'Invalid nonce' );
+             exit;
+         }
+         $TokenCode_Ajax = sanitize_text_field( $_REQUEST['TokenCode'] );
+         if( $TokenCode_Ajax == '' || $TokenCode_Ajax == null || $TokenCode_Ajax == false || $TokenCode_Ajax == 'NONE' ){
+             $TokenCode_Ajax = 'None';
+         }
+         
+         $getUserInfo_args = array(
+             'body' => wp_json_encode(array()),
+             'timeout' => '45',
+             'redirection' => '5',
+             'httpsversion' => '1.0',
+             'blocking' => true,
+             'headers' => array(
+             'Authorization' => 'Bearer ' . $TokenCode_Ajax,
+             'Content-Type' => 'application/json',
+             'Accept' => 'application/json' ),
+             'cookies' => array()
+			 
+         );
+ 
+         $getUserInfo_url = 'https://oauth.payping.ir/connect/userinfo';
+         $getUserInfo_response = wp_remote_post( $getUserInfo_url, $getUserInfo_args );
+         if( is_wp_error( $getUserInfo_response ) ){
+             echo sprintf('خطا در ارتباط به پی‌پینگ : شرح خطا %s%', $getUserInfo_response->get_error_message());
+         }else{
+             $code = wp_remote_retrieve_response_code( $getUserInfo_response );
+         if( $code === 200 ){
+             if ( isset( $getUserInfo_response["body"] ) and $getUserInfo_response["body"] != '' ) {
+                  $userInfo = $getUserInfo_response["body"];
+				  echo wp_kses_post($userInfo);
+                 exit;
+             }else{
+				 echo sprintf('کد خطا : %s%', $getUserInfo_response->get_error_message());
+             }
+         }elseif( $code === 400){
+			  echo sprintf('%s% کد خطا: %s%', wp_remote_retrieve_body( $response ), $getUserInfo_response->get_error_message() );
+         }else{
+			  echo sprintf('%s% کد خطا: %s%', wp_remote_retrieve_body( $response ), $getUserInfo_response->get_error_message() );
+         }
+         }
+     }
+        die();
+    }
 }
+new payping_donation();

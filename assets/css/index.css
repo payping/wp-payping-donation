@@ -33,20 +33,11 @@
 }
 
 .pp-donate-box {
-/*
-	width: 400px !important;
-	height: 520px !important;
-*/
 	position: fixed !important;
 	bottom: 18px !important;
 	left: 20px !important;
-/*
-	background-color: #f4f5f7 !important;
-	border-radius: 5px !important;
-*/
 	visibility: hidden;
 	opacity: 0;
-/*	box-shadow: 0 12px 20px 0 rgba(0, 0, 0, 0.15) !important;*/
 	transition: all 0.2s !important;
 }
 
@@ -174,7 +165,28 @@ button#add_price:before {
     content: '\002B';
     padding: 5px;
 }
+#add_price {
+	background: #0080ff;
+    color: #fff;
+}
+.errorTxt {
+	font-size: 12px;
+	color: #e12d35;
+	margin-right: 10px;
+}
+.amountInput::-webkit-inner-spin-button,
+.amountInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
+.amountInput {
+	direction: ltr;
+	width: 536px;
+    height: 40px;
+	margin-bottom: 18px;
+    -moz-appearance: textfield;
+}
 form#donate_payping textarea{
     width: 536px;
     height: 108px;
@@ -210,9 +222,26 @@ label#price_switch {
 	display: inline-block;
 	border-radius: 100px;
 	position: relative;
-    right: 37%;
+    
 }
-
+.suggested_subtitle {
+    margin-right: 20px;
+    color: green;
+    font-size: 12px;
+}
+.removeInput {
+    width: 20px;
+    display: inline-block;
+    text-align: center;
+    background: #e12d35;
+    border-radius: 50px;
+    color: #fff;
+    height: 20px;
+    line-height: 20px;
+    margin-right: 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
 label#price_switch:before {
     content: 'غیرفعال';
     font-size: 13px;
@@ -313,4 +342,15 @@ span.note-danger {
     background: #F4F5F7 0% 0% no-repeat padding-box;
     border-radius: 5px 5px 0px 0px;
     opacity: 1;
+}
+.form-table td {
+	position: relative;
+}
+#loader {
+    right: -25px;
+    position: absolute;
+    top: 22px;
+}
+#loader .spinner.active {
+	visibility: visible;
 }
