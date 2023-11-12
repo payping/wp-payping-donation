@@ -158,11 +158,11 @@ class payping_donation {
                             echo '<section id="OtherPages" class="enable"><div class="title_checkbox">'. esc_html__( 'برگه‌های وردپرس', 'text_domain' ) .'</div><hr/>';
                             foreach( $wordpress_pages as $key => $wp_page ){
                                 if( in_array( $key , $select_pages ) ){
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
+                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . esc_attr($key) . '"/>';
                                 }else{
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
+                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . esc_attr($key) . '"/>';
                                 }
-                                $option .= '<span class="show-title" >' . $wp_page . '</span></div>';
+                                $option .= '<span class="show-title" >' . esc_html($wp_page) . '</span></div>';
                                 if( $count_page%3 == 0 ){
                                     echo $option;
                                 }else{
@@ -411,18 +411,17 @@ public function Donate_PayPing_Script(){
     
     $Pages = array_intersect( $wordpress_pages, $select_pages );
 	$ppScript = get_option( 'Script' );
-	$sanitized_ppScript = sanitize_option( 'pp_option', $ppScript );
     if( in_array( "all" , $select_pages ) ){
-        echo $sanitized_ppScript;
+        echo sanitize_option( 'pp_option', $ppScript );
     }elseif( ! empty( $Pages ) || ! empty( $Pages_Ids_array ) ){
         foreach( $Pages as $Page ){
             if( $Page() ){
-                echo $sanitized_ppScript;
+                echo sanitize_option( 'pp_option', $ppScript );
                 exit;
             }else{
                 foreach( $Pages_Ids_array as $page ){
                     if( is_page( $page ) ){
-                        echo $sanitized_ppScript;
+                        echo sanitize_option( 'pp_option', $ppScript );
                     }
                 }
             }
@@ -461,7 +460,7 @@ public function Donate_PayPing_Script(){
          $getUserInfo_url = 'https://oauth.payping.ir/connect/userinfo';
          $getUserInfo_response = wp_remote_post( $getUserInfo_url, $getUserInfo_args );
          if( is_wp_error( $getUserInfo_response ) ){
-             echo sprintf('خطا در ارتباط به پی‌پینگ : شرح خطا %s%', $getUserInfo_response->get_error_message());
+             echo sprintf('خطا در ارتباط به پی‌پینگ : شرح خطا %s%', esc_html($getUserInfo_response->get_error_message()));
          }else{
              $code = wp_remote_retrieve_response_code( $getUserInfo_response );
          if( $code === 200 ){
@@ -470,12 +469,12 @@ public function Donate_PayPing_Script(){
 				  echo wp_kses_post($userInfo);
                  exit;
              }else{
-				 echo sprintf('کد خطا : %s%', $getUserInfo_response->get_error_message());
+				 echo sprintf('کد خطا : %s%', esc_html($getUserInfo_response->get_error_message()));
              }
          }elseif( $code === 400){
-			  echo sprintf('%s% کد خطا: %s%', wp_remote_retrieve_body( $response ), $getUserInfo_response->get_error_message() );
+			  echo sprintf('%s% کد خطا: %s%', esc_html(wp_remote_retrieve_body( $response )), esc_html($getUserInfo_response->get_error_message() ));
          }else{
-			  echo sprintf('%s% کد خطا: %s%', wp_remote_retrieve_body( $response ), $getUserInfo_response->get_error_message() );
+			  echo sprintf('%s% کد خطا: %s%', esc_html(wp_remote_retrieve_body( $response )), esc_html($getUserInfo_response->get_error_message() ));
          }
          }
      }
