@@ -10,6 +10,7 @@
 .pp-donate svg {
 	vertical-align: middle !important;
 }
+
 .pp-donate-btn {
 	margin: auto;
 	width: 120px !important;
@@ -48,6 +49,7 @@
 		width: 95% !important;
 	}
 }
+
 .pp-donate-box-header {
 	position: relative !important;
 	width: 100% !important;
@@ -148,7 +150,7 @@
 }
 
 /* new style */
-form#donate_payping input[type=text]{
+form#donate_payping input[type=text], button#add_price{
     width: 536px;
     height: 40px;
     color: #202124;
@@ -158,17 +160,14 @@ form#donate_payping input[type=text]{
     border-radius: 5px;
     opacity: 1;
 }
-form#donate_payping button#add_price {
-	width: 536px;
-    height: 40px;
-	background: #0080ff;
-    color: #fff;
-	cursor: pointer;
-	border: none;
-}
+
 button#add_price:before {
     content: '\002B';
     padding: 5px;
+}
+#add_price {
+	background: #0080ff;
+    color: #fff;
 }
 .errorTxt {
 	font-size: 12px;
@@ -204,17 +203,10 @@ p#title_price {
     font-weight: bold;
 }
 
-input#amount0, div#prices input {
+#donate_payping input#amount0, #donate_payping div#prices input {
     text-align: center;
     cursor: pointer;
 }
-
-input[type=checkbox]{
-	height: 0;
-	width: 0;
-	visibility: hidden;
-}
-
 label#price_switch {
 	cursor: pointer;
 	width: 73px;
@@ -266,17 +258,17 @@ label#price_switch:after {
 	transition: 0.3s;
 }
 
-input[type=checkbox]:checked + label#price_switch {
+#donate_payping input[type=checkbox]:checked + label#price_switch {
 	background: #0080ff;
 }
 
-input[type=checkbox]:checked + label#price_switch:before {
+#donate_payping input[type=checkbox]:checked + label#price_switch:before {
     content: 'فعال';
     right: calc(50% - 5px);
     transform: translateX(-50%);
 }
 
-input[type=checkbox]:checked + label#price_switch:after {
+#donate_payping input[type=checkbox]:checked + label#price_switch:after {
 	left: calc(100% - 5px);
 	transform: translateX(-100%);
 }
@@ -288,12 +280,12 @@ label#price_switch:active:before {
 label#price_switch:active:after {
 	width:30px;
 }
-div.checkbox-pages {
+#donate_payping div.checkbox-pages {
     width: calc( 30% - 5px);
     display: inline-block;
 }
 
-input.input-value {
+#donate_payping input.input-value {
     width: 15px;
     height: 15px;
     visibility: visible;

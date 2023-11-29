@@ -130,9 +130,11 @@ class payping_donation {
                                 $select_pages = array();
                             }
                             if( in_array( "all" , $select_pages ) ){
-                                echo '<div class="checkbox-all"><input name="Pages[]" checked type="checkbox" id="all_pages" class="input-value" value="all" onclick="AllPages_checkbox_donate()"/><span class="show-title" >' . esc_attr( __( 'همه' ) ) . '</span></div><br/><hr/>';
+                                $element_safe  = '<div class="checkbox-all"><input name="Pages[]" checked type="checkbox" id="all_pages" class="input-value" value="all" onclick="AllPages_checkbox_donate()"/><span class="show-title" >' . esc_attr( __( 'همه' ) ) . '</span></div><br/><hr/>';
+                                echo $element_safe;
                             }else{
-                                echo '<div class="checkbox-all"><input name="Pages[]" type="checkbox" id="all_pages" class="input-value" value="all" onclick="AllPages_checkbox_donate()"/><span class="show-title" >' . esc_attr( __( 'همه' ) ) . '</span></div><br/><hr/>';
+                                $element_safe  = '<div class="checkbox-all"><input name="Pages[]" checked type="checkbox" id="all_pages" class="input-value" value="all" onclick="AllPages_checkbox_donate()"/><span class="show-title" >' . esc_attr( __( 'همه' ) ) . '</span></div><br/><hr/>';
+                                echo $element_safe;
                             }
                             echo '
                             <script type="text/javascript">
@@ -156,19 +158,21 @@ class payping_donation {
                                 'is_archive' => __('برگه بایگانی', 'text_domain')
                             );
                             echo '<section id="OtherPages" class="enable"><div class="title_checkbox">'. esc_html__( 'برگه‌های وردپرس', 'text_domain' ) .'</div><hr/>';
-                            foreach( $wordpress_pages as $key => $wp_page ){
-                                if( in_array( $key , $select_pages ) ){
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . esc_attr($key) . '"/>';
-                                }else{
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . esc_attr($key) . '"/>';
+                            foreach ( $wordpress_pages as $key => $wp_page ) {
+                                if ( in_array( $key, $select_pages ) ) {
+                                    $option_safe = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . esc_attr( $key ) . '"/>';
+                                } else {
+                                    $option_safe = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . esc_attr( $key ) . '"/>';
                                 }
-                                $option .= '<span class="show-title" >' . esc_html($wp_page) . '</span></div>';
-                                if( $count_page%3 == 0 ){
-                                    echo $option;
-                                }else{
-                                    echo $option;
+                                $option_safe .= '<span class="show-title">' . esc_html( $wp_page ) . '</span></div>';
+                                
+                                if ( $count_page % 3 == 0 ) {
+                                    echo $option_safe;
+                                } else {
+                                    echo $option_safe;
                                 }
-                                $count_page++;   
+                                
+                                $count_page++;
                             }
                             /* check install and active woocommerce */
                             if( class_exists( 'WooCommerce' ) ):
@@ -182,15 +186,15 @@ class payping_donation {
                             echo '<div class="title_checkbox">'. esc_html__( 'افزونه ووکامرس', 'text_domain' ) .'</div><hr/>';
                             foreach( $woocommerce_pages as $key => $woo_page ){
                                 if( in_array( $key , $select_pages ) ){
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
+                                    $option_safe = '<div class="checkbox-pages"><input name="Pages[]" checked type="checkbox" class="input-value" value="' . esc_attr($key) . '"/>';
                                 }else{
-                                    $option = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . wp_kses_post($key) . '"/>';
+                                    $option_safe = '<div class="checkbox-pages"><input name="Pages[]" type="checkbox" class="input-value" value="' . esc_attr($key) . '"/>';
                                 }
-                                $option .= '<span class="show-title" >' . $woo_page . '</span></div>';
+                                $option_safe .= '<span class="show-title" >' . esc_html($woo_page) . '</span></div>';
                                 if( $count_page%3 == 0 ){
-                                    echo $option;
+                                    echo $option_safe;
                                 }else{
-                                    echo $option;
+                                    echo $option_safe;
                                 }
                                 $count_page++;   
                             }
@@ -460,7 +464,7 @@ public function Donate_PayPing_Script(){
          $getUserInfo_url = 'https://oauth.payping.ir/connect/userinfo';
          $getUserInfo_response = wp_remote_post( $getUserInfo_url, $getUserInfo_args );
          if( is_wp_error( $getUserInfo_response ) ){
-             echo sprintf('خطا در ارتباط به پی‌پینگ : شرح خطا %s%', esc_html($getUserInfo_response->get_error_message()));
+             echo sprintf(esc_html('خطا در ارتباط به پی‌پینگ : شرح خطا %s%', $getUserInfo_response->get_error_message()));
          }else{
              $code = wp_remote_retrieve_response_code( $getUserInfo_response );
          if( $code === 200 ){
@@ -469,12 +473,12 @@ public function Donate_PayPing_Script(){
 				  echo wp_kses_post($userInfo);
                  exit;
              }else{
-				 echo sprintf('کد خطا : %s%', esc_html($getUserInfo_response->get_error_message()));
+				 echo sprintf(esc_html('کد خطا : %s%', $getUserInfo_response->get_error_message()));
              }
          }elseif( $code === 400){
-			  echo sprintf('%s% کد خطا: %s%', esc_html(wp_remote_retrieve_body( $response )), esc_html($getUserInfo_response->get_error_message() ));
+			  echo sprintf(esc_html('%s% کد خطا: %s%', wp_remote_retrieve_body( $response ), $getUserInfo_response->get_error_message()) );
          }else{
-			  echo sprintf('%s% کد خطا: %s%', esc_html(wp_remote_retrieve_body( $response )), esc_html($getUserInfo_response->get_error_message() ));
+			  echo sprintf(esc_html('%s% کد خطا: %s%', wp_remote_retrieve_body( $response ), $getUserInfo_response->get_error_message()) );
          }
          }
      }
