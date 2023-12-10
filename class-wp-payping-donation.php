@@ -12,9 +12,9 @@ class payping_donation {
         add_shortcode('PayPingDonate', [$this, 'Donate_PayPing_Script_shortcode']);
 	}
     public function callback_for_setting_up_scripts(){
-        wp_register_style( 'index-donate', DPPDU . 'assets/css/index.css' );
+        wp_register_style( 'index-donate', DonationPPDU . 'assets/css/index.css' );
         wp_enqueue_style( 'index-donate' );
-        wp_enqueue_script( 'donate-ajax', DPPDU . 'assets/js/donate-ajax.js', array('jquery'), null, true );
+        wp_enqueue_script( 'donate-ajax', DonationPPDU . 'assets/js/donate-ajax.js', array('jquery'), null, true );
         wp_localize_script(
             'donate-ajax',
             'donate_ajax_obj',
@@ -416,16 +416,16 @@ public function Donate_PayPing_Script(){
     $Pages = array_intersect( $wordpress_pages, $select_pages );
 	$ppScript = get_option( 'Script' );
     if( in_array( "all" , $select_pages ) ){
-        echo sanitize_option( 'pp_option', $ppScript );
+        echo esc_html(sanitize_option( 'pp_option', $ppScript ));
     }elseif( ! empty( $Pages ) || ! empty( $Pages_Ids_array ) ){
         foreach( $Pages as $Page ){
             if( $Page() ){
-                echo sanitize_option( 'pp_option', $ppScript );
+                echo esc_html(sanitize_option( 'pp_option', $ppScript ));
                 exit;
             }else{
                 foreach( $Pages_Ids_array as $page ){
                     if( is_page( $page ) ){
-                        echo sanitize_option( 'pp_option', $ppScript );
+                        echo esc_html(sanitize_option( 'pp_option', $ppScript ));
                     }
                 }
             }

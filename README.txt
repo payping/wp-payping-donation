@@ -1,9 +1,10 @@
-=== WP PayPing Donation ===
+=== PayPing Donation ===
 Contributors: payping, mahdisarani, hadihosseini
 Tags: payping, donation, iran, wp donation, افزونه دونیت, حمایت مالی, پی پینگ
 Requires at least: 4.0.0
-Tested up to: 6.2.2
+Tested up to: 6.4.2
 Stable tag: 1.0.0
+Requires PHP: 7.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
